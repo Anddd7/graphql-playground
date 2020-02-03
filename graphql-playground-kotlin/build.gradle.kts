@@ -54,6 +54,9 @@ subprojects {
     /* kotlin */
     implementation(kotlin("stdlib-jdk8"))
     implementation(kotlin("reflect"))
+
+    implementation("ch.qos.logback:logback-classic:1.2.3")
+
     testImplementation(kotlin("test-junit5"))
 
     testImplementation("io.mockk:mockk:1.9.3")
