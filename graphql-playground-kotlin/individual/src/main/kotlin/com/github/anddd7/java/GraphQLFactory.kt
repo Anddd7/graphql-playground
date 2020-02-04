@@ -7,21 +7,15 @@ import graphql.schema.idl.SchemaGenerator
 import graphql.schema.idl.SchemaParser
 
 class GraphQLFactory {
-  fun execute(): Map<Any, Any> {
-    val schema = "type Query{hello: String}"
-
+  fun build(schema: String, type: String, field: String, dataFetcher: StaticDataFetcher): GraphQL {
     val typeDefinitionRegistry = SchemaParser().parse(schema)
 
     val runtimeWiring = newRuntimeWiring()
-        .type("Query") {
-          it.dataFetcher("hello", StaticDataFetcher("world"))
-        }
+        .type(type) { it.dataFetcher(field, dataFetcher) }
         .build()
 
     val graphQLSchema = SchemaGenerator().makeExecutableSchema(typeDefinitionRegistry, runtimeWiring)
 
-    val build = GraphQL.newGraphQL(graphQLSchema).build()
-    val executionResult = build.execute("{hello}")
-    return executionResult.getData<Map<Any, Any>>()
+    return GraphQL.newGraphQL(graphQLSchema).build()
   }
 }
