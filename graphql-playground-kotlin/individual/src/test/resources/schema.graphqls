@@ -7,7 +7,8 @@ type Book {
     name: String
     pageCount: Int
     author: Author,
-    company: Company
+    company: Company,
+    publishedAt(dateFormat : String = "dd, MMM, yyyy"): String
 }
 
 type Author {

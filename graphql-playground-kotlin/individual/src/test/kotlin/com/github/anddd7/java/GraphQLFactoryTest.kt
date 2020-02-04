@@ -74,4 +74,15 @@ internal class GraphQLFactoryTest {
     assertThat(company["name"]).isEqualTo("Github")
     assertThat(company["address"]).isEqualTo("https://github.com")
   }
+
+  @Test
+  fun `should get formatted data from property data fetcher`() {
+    val query = "{bookById(id: 1) {publishedAt(dateFormat: \"dd, MMM, yyyy\")}}"
+
+    val data = graphQL.execute(query).getData<Map<String, Any>>()
+
+    val bookById = data["bookById"] as? Map<String, Any> ?: emptyMap()
+
+    assertThat(bookById["publishedAt"]).isEqualTo("01, Jan, 2020")
+  }
 }
