@@ -1,21 +1,27 @@
 package com.github.anddd7.java
 
 import graphql.GraphQL
-import graphql.schema.StaticDataFetcher
+import graphql.schema.idl.RuntimeWiring
 import graphql.schema.idl.RuntimeWiring.newRuntimeWiring
 import graphql.schema.idl.SchemaGenerator
 import graphql.schema.idl.SchemaParser
 
 class GraphQLFactory {
-  fun build(schema: String, type: String, field: String, dataFetcher: StaticDataFetcher): GraphQL {
-    val typeDefinitionRegistry = SchemaParser().parse(schema)
-
-    val runtimeWiring = newRuntimeWiring()
-        .type(type) { it.dataFetcher(field, dataFetcher) }
-        .build()
-
-    val graphQLSchema = SchemaGenerator().makeExecutableSchema(typeDefinitionRegistry, runtimeWiring)
+  fun build(graphQLDefinition: String, fetchers: List<DataFetcherWrapper<*>>): GraphQL {
+    val typeRegistry = getTypeDefinitionRegistry(graphQLDefinition)
+    val runtimeWiring = getRuntimeWiring(fetchers)
+    val graphQLSchema = SchemaGenerator().makeExecutableSchema(typeRegistry, runtimeWiring)
 
     return GraphQL.newGraphQL(graphQLSchema).build()
   }
+
+  private fun getTypeDefinitionRegistry(graphQLDefinition: String) =
+      SchemaParser().parse(graphQLDefinition)
+
+  private fun getRuntimeWiring(fetchers: List<DataFetcherWrapper<*>>): RuntimeWiring =
+      newRuntimeWiring().apply {
+        fetchers.forEach { fetcher ->
+          type(fetcher.getType()) { it.dataFetcher(fetcher.getFieldName(), fetcher) }
+        }
+      }.build()
 }
