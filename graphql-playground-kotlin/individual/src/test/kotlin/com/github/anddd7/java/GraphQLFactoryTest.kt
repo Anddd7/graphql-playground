@@ -39,13 +39,14 @@ internal class GraphQLFactoryTest {
 
   @Test
   fun `should get data from data fetcher`() {
-    val query = "{bookById(id: 1) {id,name,pageCount}}"
+    val query = "{bookById(id: 1) {id,name,title,pageCount}}"
 
     val data = graphQL.execute(query).getData<Map<String, Any>>()
 
     val bookById = data["bookById"] as? Map<String, Any> ?: emptyMap()
 
     assertThat(bookById["name"]).isEqualTo("Harry Potter and the Philosopher's Stone")
+    assertThat(bookById["title"]).isEqualTo("Harry Potter and the Philosopher's Stone")
     assertThat(bookById["pageCount"]).isEqualTo(223)
   }
 

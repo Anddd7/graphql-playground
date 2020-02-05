@@ -2,9 +2,12 @@ type Query {
     bookById(id: ID): Book
 }
 
+directive @fetch(from: String!) on FIELD_DEFINITION
+
 type Book {
     id: ID
     name: String
+    title: String @fetch(from:"name")
     pageCount: Int
     author: Author,
     company: Company,
