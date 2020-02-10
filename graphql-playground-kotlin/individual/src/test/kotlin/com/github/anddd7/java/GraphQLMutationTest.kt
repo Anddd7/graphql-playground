@@ -2,9 +2,9 @@ package com.github.anddd7.java
 
 import com.github.anddd7.java.entity.Message
 import com.github.anddd7.java.entity.MessageInput
+import graphql.ExecutionInput.newExecutionInput
 import graphql.schema.DataFetchingEnvironment
-import org.assertj.core.api.Assertions
-import org.assertj.core.api.Assertions.*
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 import org.slf4j.LoggerFactory
@@ -67,9 +67,18 @@ internal class GraphQLMutationTest {
 
   @Test
   fun `should save a new message and return specific fields with mutation`() {
-    val mutation = "mutation{createMessage(input: {content:\"Please clear your table after finished your work\", author:\"admin\"}) {content,author}}"
-
-    val data = graphQL.execute(mutation).getData<Map<String, Any>>()
+    val mutation = "mutation CreateMessage(\$input: MessageInput) {createMessage(input: \$input) {content, author}}"
+    val variables = mapOf(
+        "input" to mapOf(
+            "content" to "Please clear your table after finished your work",
+            "author" to "admin"
+        )
+    )
+    val executionInput = newExecutionInput()
+        .query(mutation)
+        .variables(variables)
+        .build()
+    val data = graphQL.execute(executionInput).getData<Map<String, Any>>()
 
     val response = data["createMessage"] as? Map<String, Any> ?: emptyMap()
 
@@ -79,14 +88,35 @@ internal class GraphQLMutationTest {
 
   @Test
   fun `should update the new message and return specific fields with mutation`() {
-    val create = "mutation{createMessage(input:{content:\"Please clear your table after finished your work\", author:\"admin\"}){id}}"
-    val createResponse = graphQL.execute(create)
+    val createMutation = "mutation CreateMessage(\$input: MessageInput) {createMessage(input: \$input) {id}}"
+    val updateMutation = "mutation UpdateMessage(\$id: ID!, \$input: MessageInput) {updateMessage(id: \$id, input: \$input) {content, author}}"
+
+    val createVariables = mapOf(
+        "input" to mapOf(
+            "content" to "Please clear your table after finished your work",
+            "author" to "admin"
+        )
+    )
+    val createResponse = newExecutionInput()
+        .query(createMutation)
+        .variables(createVariables)
+        .build()
+        .let(graphQL::execute)
         .getData<Map<String, Any>>()["createMessage"] as? Map<String, String>
         ?: emptyMap()
-    val id = createResponse.getValue("id")
 
-    val update = "mutation{updateMessage(id:$id,input:{content:\"Already done\", author:\"user\"}){content,author}}"
-    val updateResponse = graphQL.execute(update)
+    val updateVariables = mapOf(
+        "id" to createResponse.getValue("id"),
+        "input" to mapOf(
+            "content" to "Already done",
+            "author" to "user"
+        )
+    )
+    val updateResponse = newExecutionInput()
+        .query(updateMutation)
+        .variables(updateVariables)
+        .build()
+        .let(graphQL::execute)
         .getData<Map<String, Any>>()["updateMessage"] as? Map<String, String>
         ?: emptyMap()
 
