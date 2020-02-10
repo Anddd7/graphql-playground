@@ -1,4 +1,4 @@
-package com.github.anddd7.java.entity
+package com.github.anddd7.entity
 
 data class Author(
     val id: Int = 0,

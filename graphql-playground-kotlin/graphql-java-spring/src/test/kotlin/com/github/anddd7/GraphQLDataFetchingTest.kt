@@ -1,9 +1,9 @@
-package com.github.anddd7.java
+package com.github.anddd7
 
-import com.github.anddd7.java.entity.Author
-import com.github.anddd7.java.entity.AuthorRepository
-import com.github.anddd7.java.entity.Book
-import com.github.anddd7.java.entity.BookRepository
+import com.github.anddd7.entity.Author
+import com.github.anddd7.entity.AuthorRepository
+import com.github.anddd7.entity.Book
+import com.github.anddd7.entity.BookRepository
 import graphql.ExecutionInput.newExecutionInput
 import graphql.schema.DataFetchingEnvironment
 import org.assertj.core.api.Assertions.assertThat
@@ -12,7 +12,7 @@ import org.slf4j.LoggerFactory
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletableFuture.supplyAsync
 
-internal class GraphQLDataFetchingTest {
+class GraphQLDataFetchingTest {
   private val log = LoggerFactory.getLogger(this.javaClass)
 
   private val graphQL = build()

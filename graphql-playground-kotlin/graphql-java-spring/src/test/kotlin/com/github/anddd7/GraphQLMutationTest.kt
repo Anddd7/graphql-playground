@@ -1,7 +1,7 @@
-package com.github.anddd7.java
+package com.github.anddd7
 
-import com.github.anddd7.java.entity.Message
-import com.github.anddd7.java.entity.MessageInput
+import com.github.anddd7.entity.Message
+import com.github.anddd7.entity.MessageInput
 import graphql.ExecutionInput.newExecutionInput
 import graphql.schema.DataFetchingEnvironment
 import org.assertj.core.api.Assertions.assertThat

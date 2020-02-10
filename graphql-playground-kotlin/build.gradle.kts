@@ -1,25 +1,19 @@
+import org.gradle.plugins.ide.idea.model.IdeaLanguageLevel
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 /** -------------- import & apply plugins -------------- */
 
 // import plugins into this project
 plugins {
-  val kotlinVersion = "1.3.61"
-
   idea
 
-  kotlin("jvm") version kotlinVersion
+  kotlin("jvm")
 }
-
-/** -------------- configure imported plugin -------------- */
 
 idea {
   project {
     jdkName = "11"
-  }
-  module {
-    outputDir = file("$buildDir/idea-compiler/main")
-    testOutputDir = file("$buildDir/idea-compiler/test")
+    languageLevel = IdeaLanguageLevel(JavaVersion.VERSION_11)
   }
 }
 
@@ -42,11 +36,11 @@ allprojects {
 }
 
 subprojects {
-  apply(plugin = "java")
   apply(plugin = "kotlin")
 
-  java.sourceCompatibility = JavaVersion.VERSION_11
-  java.targetCompatibility = JavaVersion.VERSION_11
+  kotlin {
+    this.target
+  }
 
   /** -------------- dependencies management -------------- */
 
@@ -63,8 +57,8 @@ subprojects {
     testImplementation("org.assertj:assertj-core:3.14.0")
 
     /* junit5 */
-    testImplementation("org.junit.jupiter:junit-jupiter-api:5.6.0")
-    testImplementation("org.junit.jupiter:junit-jupiter-engine:5.6.0")
+//    testImplementation("org.junit.jupiter:junit-jupiter-api:5.6.0")
+//    testImplementation("org.junit.jupiter:junit-jupiter-engine:5.6.0")
   }
 
   /** -------------- configure tasks -------------- */

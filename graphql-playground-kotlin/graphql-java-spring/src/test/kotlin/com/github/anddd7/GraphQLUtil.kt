@@ -1,4 +1,4 @@
-package com.github.anddd7.java
+package com.github.anddd7
 
 import graphql.GraphQL
 
