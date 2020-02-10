@@ -12,7 +12,10 @@ class GraphQLFactory {
     val runtimeWiring = getRuntimeWiring(fetchers)
     val graphQLSchema = SchemaGenerator().makeExecutableSchema(typeRegistry, runtimeWiring)
 
-    return GraphQL.newGraphQL(graphQLSchema).build()
+    return GraphQL.newGraphQL(graphQLSchema)
+//        .queryExecutionStrategy(AsyncExecutionStrategy())
+//        .mutationExecutionStrategy(AsyncSerialExecutionStrategy())
+        .build()
   }
 
   private fun getTypeDefinitionRegistry(graphQLDefinition: String) =
