@@ -1,11 +1,9 @@
-type Query {
-    bookById(id: ID): Book
-}
-
 directive @fetch(from: String!) on FIELD_DEFINITION
 
+# book
+
 type Book {
-    id: ID
+    id: ID!
     name: String
     title: String @fetch(from:"name")
     pageCount: Int
@@ -15,7 +13,7 @@ type Book {
 }
 
 type Author {
-    id: ID
+    id: ID!
     firstName: String
     lastName: String
 }
@@ -23,4 +21,29 @@ type Author {
 type Company {
     name: String
     address: String
+}
+
+# message
+
+type Message {
+    id: ID!
+    content: String
+    author: String
+}
+
+# query & mutation
+
+type Query {
+    bookById(id: ID!): Book
+    getMessage(id: ID!): Message
+}
+
+input MessageInput {
+    content: String
+    author: String
+}
+
+type Mutation {
+    createMessage(input: MessageInput): Message
+    updateMessage(id: ID!, input: MessageInput): Message
 }

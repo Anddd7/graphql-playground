@@ -4,16 +4,12 @@ import com.github.anddd7.java.entity.Author
 import com.github.anddd7.java.entity.AuthorRepository
 import com.github.anddd7.java.entity.Book
 import com.github.anddd7.java.entity.BookRepository
-import graphql.GraphQL
 import graphql.schema.DataFetchingEnvironment
-import io.mockk.impl.annotations.MockK
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
-internal class GraphQLFactoryTest {
+internal class GraphQLDataFetchingTest {
 
-  @MockK
-  private val graphQLFactory: GraphQLFactory = GraphQLFactory()
   private val graphQL = build()
   private val graphQLWithErrors = buildWithErrors()
 
@@ -50,13 +46,6 @@ internal class GraphQLFactoryTest {
           }
       )
   )
-
-  private fun build(fetchers: List<DataFetcherWrapper<*>>): GraphQL {
-    val uri = ClassLoader.getSystemClassLoader().getResourceAsStream("schema.graphqls")!!
-    val schema = String(uri.readAllBytes())
-
-    return graphQLFactory.build(schema, fetchers)
-  }
 
   @Test
   fun `should get data from data fetcher`() {
