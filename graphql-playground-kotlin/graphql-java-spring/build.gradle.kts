@@ -7,8 +7,8 @@ plugins{
 
 dependencies {
   /* graphql */
-  implementation("com.graphql-java:graphql-java-spring-boot-starter-webflux:1.0")
-//  implementation("com.graphql-java:graphql-java:14.0")
+//  implementation("com.graphql-java:graphql-java-spring-boot-starter-webflux:1.0")
+  implementation("com.graphql-java:graphql-java:14.0")
 
   /* webflux x reactor Z*/
   implementation("org.springframework.boot:spring-boot-starter-webflux")

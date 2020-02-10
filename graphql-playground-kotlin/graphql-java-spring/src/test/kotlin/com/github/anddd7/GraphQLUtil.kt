@@ -1,12 +1,12 @@
 package com.github.anddd7
 
+import com.github.anddd7.datafetchers.DataFetcherWrapper
+import com.github.anddd7.factory.GraphQLFactory
 import graphql.GraphQL
-
-private val graphQLFactory = GraphQLFactory()
 
 fun build(fetchers: List<DataFetcherWrapper<*>>): GraphQL {
   val uri = ClassLoader.getSystemClassLoader().getResourceAsStream("schema.graphqls")!!
   val schema = String(uri.readAllBytes())
 
-  return graphQLFactory.build(schema, fetchers)
+  return GraphQLFactory.buildGraphQL(schema, fetchers)
 }
