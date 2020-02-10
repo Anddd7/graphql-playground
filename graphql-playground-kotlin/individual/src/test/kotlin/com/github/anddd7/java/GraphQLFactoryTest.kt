@@ -15,25 +15,46 @@ internal class GraphQLFactoryTest {
   @MockK
   private val graphQLFactory: GraphQLFactory = GraphQLFactory()
   private val graphQL = build()
+  private val graphQLWithErrors = buildWithErrors()
 
-  private fun build(): GraphQL {
+  private fun build() = build(
+      listOf(
+          object : DataFetcherWrapper<Book> {
+            override fun getType() = "Query"
+            override fun getFieldName() = "bookById"
+            override fun get(environment: graphql.schema.DataFetchingEnvironment) =
+                BookRepository.findById(environment.getArgument<kotlin.String>("id").toInt())
+          },
+          object : DataFetcherWrapper<Author> {
+            override fun getType() = "Book"
+            override fun getFieldName() = "author"
+            override fun get(environment: DataFetchingEnvironment) =
+                AuthorRepository.findById(environment.getSource<Book>().authorId)
+          }
+      )
+  )
+
+  private fun buildWithErrors() = build(
+      listOf(
+          object : DataFetcherWrapper<Book> {
+            override fun getType() = "Query"
+            override fun getFieldName() = "bookById"
+            override fun get(environment: DataFetchingEnvironment) =
+                BookRepository.findById(environment.getArgument<String>("id").toInt())
+          },
+          object : DataFetcherWrapper<Author> {
+            override fun getType() = "Book"
+            override fun getFieldName() = "author"
+            override fun get(environment: DataFetchingEnvironment) =
+                throw RuntimeException("Got exception while fetching data")
+          }
+      )
+  )
+
+  private fun build(fetchers: List<DataFetcherWrapper<*>>): GraphQL {
     val uri = ClassLoader.getSystemClassLoader().getResourceAsStream("schema.graphqls")!!
     val schema = String(uri.readAllBytes())
 
-    val fetchers: List<DataFetcherWrapper<*>> = listOf(
-        object : DataFetcherWrapper<Book> {
-          override fun getType() = "Query"
-          override fun getFieldName() = "bookById"
-          override fun get(environment: DataFetchingEnvironment) =
-              BookRepository.findById(environment.getArgument<String>("id").toInt())
-        },
-        object : DataFetcherWrapper<Author> {
-          override fun getType() = "Book"
-          override fun getFieldName() = "author"
-          override fun get(environment: DataFetchingEnvironment) =
-              AuthorRepository.findById(environment.getSource<Book>().authorId)
-        }
-    )
     return graphQLFactory.build(schema, fetchers)
   }
 
@@ -85,5 +106,21 @@ internal class GraphQLFactoryTest {
     val bookById = data["bookById"] as? Map<String, Any> ?: emptyMap()
 
     assertThat(bookById["publishedAt"]).isEqualTo("01, Jan, 2020")
+  }
+
+  @Test
+  fun `should return partial error when get exception while fetching`() {
+    val query = "{bookById(id: 1) {title,author{firstName,lastName}}}"
+
+    val result = graphQLWithErrors.execute(query)
+    val data = result.getData<Map<String, Any>>()
+    val errors = result.errors
+
+    val bookById = data["bookById"] as? Map<String, Any> ?: emptyMap()
+
+    assertThat(bookById["title"]).isEqualTo("Harry Potter and the Philosopher's Stone")
+    assertThat(errors).allMatch {
+      it.message.contains("Got exception while fetching data")
+    }
   }
 }
