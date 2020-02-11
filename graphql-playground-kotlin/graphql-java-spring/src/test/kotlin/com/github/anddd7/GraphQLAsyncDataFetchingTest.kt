@@ -1,5 +1,6 @@
 package com.github.anddd7
 
+import com.github.anddd7.datafetchers.CoroutineDataFetcherWrapper
 import com.github.anddd7.datafetchers.DataFetcherWrapper
 import com.github.anddd7.datafetchers.FutureDataFetcherWrapper
 import com.github.anddd7.datafetchers.MonoDataFetcherWrapper
@@ -9,8 +10,11 @@ import com.github.anddd7.entity.Book
 import com.github.anddd7.entity.BookRepository
 import graphql.ExecutionInput.newExecutionInput
 import graphql.schema.DataFetchingEnvironment
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.RepeatedTest
 import org.slf4j.LoggerFactory
 import reactor.core.publisher.Mono
 import reactor.core.publisher.Mono.just
@@ -21,7 +25,7 @@ import java.util.concurrent.CompletableFuture.supplyAsync
 class GraphQLAsyncDataFetchingTest {
   private val log = LoggerFactory.getLogger(this.javaClass)
 
-  @Test
+  @RepeatedTest(5)
   fun `should execute async query with future data fetchers`() {
     asyncFetching(
         listOf(
@@ -39,7 +43,7 @@ class GraphQLAsyncDataFetchingTest {
                     .thenApplyAsync {
                       log.info("[book] waiting sleep")
 
-                      //                  Thread.sleep(100)
+                      Thread.sleep(100)
 
                       log.info("[book] find by id")
 
@@ -61,7 +65,7 @@ class GraphQLAsyncDataFetchingTest {
                     .thenApplyAsync {
                       log.info("[author] waiting sleep")
 
-                      //                  Thread.sleep(100)
+                      Thread.sleep(100)
 
                       log.info("[author] find by id")
 
@@ -73,7 +77,7 @@ class GraphQLAsyncDataFetchingTest {
     )
   }
 
-  @Test
+  @RepeatedTest(5)
   fun `should execute async query with mono data fetchers`() {
     asyncFetching(
         listOf(
@@ -99,6 +103,48 @@ class GraphQLAsyncDataFetchingTest {
                     .delayElement(Duration.ofMillis(100))
                     .map(AuthorRepository::findById)
                     .log()
+              }
+            }
+        )
+    )
+  }
+
+  @RepeatedTest(5)
+  fun `should execute async query with kotlin coroutines`() {
+    asyncFetching(
+        listOf(
+            object : CoroutineDataFetcherWrapper<Book> {
+              override fun getType() = "Query"
+              override fun getFieldName() = "bookById"
+              override suspend fun fetch(environment: DataFetchingEnvironment): Book {
+                log.info("[book] fire data fetching")
+
+                return withContext(Dispatchers.Default) {
+                  log.info("[book] waiting sleep")
+
+                  delay(100)
+
+                  log.info("[book] find by id")
+
+                  BookRepository.findById(environment.getArgument<String>("id").toInt())
+                }
+              }
+            },
+            object : CoroutineDataFetcherWrapper<Author> {
+              override fun getType() = "Book"
+              override fun getFieldName() = "author"
+              override suspend fun fetch(environment: DataFetchingEnvironment): Author {
+                log.info("[author] fire data fetching")
+
+                return withContext(Dispatchers.Default) {
+                  log.info("[author] waiting sleep")
+
+                  delay(100)
+
+                  log.info("[author] find by id")
+
+                  AuthorRepository.findById(environment.getSource<Book>().authorId)
+                }
               }
             }
         )

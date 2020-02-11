@@ -10,6 +10,7 @@ dependencies {
   implementation("com.expediagroup:graphql-kotlin-schema-generator:2.0.0-RC6")
 
   /* webflux x reactor */
+  implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
   implementation("org.springframework.boot:spring-boot-starter-webflux")
   testImplementation("org.springframework.boot:spring-boot-starter-test") {
     exclude(module = "junit")
