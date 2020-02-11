@@ -8,6 +8,7 @@ type Book {
     title: String @fetch(from:"name")
     pageCount: Int
     author: Author
+    editor: Author
     company: Company
     publishedAt(dateFormat : String = "dd, MMM, yyyy"): String
 }

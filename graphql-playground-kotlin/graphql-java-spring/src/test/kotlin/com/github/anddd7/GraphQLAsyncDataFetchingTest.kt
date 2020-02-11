@@ -10,9 +10,7 @@ import com.github.anddd7.entity.Book
 import com.github.anddd7.entity.BookRepository
 import graphql.ExecutionInput.newExecutionInput
 import graphql.schema.DataFetchingEnvironment
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.withContext
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.RepeatedTest
 import org.slf4j.LoggerFactory
@@ -24,6 +22,8 @@ import java.util.concurrent.CompletableFuture.supplyAsync
 
 class GraphQLAsyncDataFetchingTest {
   private val log = LoggerFactory.getLogger(this.javaClass)
+
+  private val delayTime: Long = 100
 
   @RepeatedTest(5)
   fun `should execute async query with future data fetchers`() {
@@ -43,7 +43,7 @@ class GraphQLAsyncDataFetchingTest {
                     .thenApplyAsync {
                       log.info("[book] waiting sleep")
 
-                      Thread.sleep(100)
+                      Thread.sleep(delayTime)
 
                       log.info("[book] find by id")
 
@@ -65,9 +65,31 @@ class GraphQLAsyncDataFetchingTest {
                     .thenApplyAsync {
                       log.info("[author] waiting sleep")
 
-                      Thread.sleep(100)
+                      Thread.sleep(delayTime)
 
                       log.info("[author] find by id")
+
+                      AuthorRepository.findById(it)
+                    }
+              }
+            },
+            object : FutureDataFetcherWrapper<Author> {
+              override fun getType() = "Book"
+              override fun getFieldName() = "editor"
+              override fun get(environment: DataFetchingEnvironment): CompletableFuture<Author> {
+                log.info("[editor] fire data fetching")
+
+                return supplyAsync {
+                  log.info("[editor] get argument")
+
+                  environment.getSource<Book>().editorId
+                }
+                    .thenApplyAsync {
+                      log.info("[editor] waiting sleep")
+
+                      Thread.sleep(delayTime)
+
+                      log.info("[editor] find by id")
 
                       AuthorRepository.findById(it)
                     }
@@ -88,7 +110,7 @@ class GraphQLAsyncDataFetchingTest {
                 log.info("[book] fire data fetching")
 
                 return just(environment.getArgument<String>("id").toInt())
-                    .delayElement(Duration.ofMillis(100))
+                    .delayElement(Duration.ofMillis(delayTime))
                     .map(BookRepository::findById)
                     .log()
               }
@@ -100,7 +122,19 @@ class GraphQLAsyncDataFetchingTest {
                 log.info("[author] fire data fetching")
 
                 return just(environment.getSource<Book>().authorId)
-                    .delayElement(Duration.ofMillis(100))
+                    .delayElement(Duration.ofMillis(delayTime))
+                    .map(AuthorRepository::findById)
+                    .log()
+              }
+            },
+            object : MonoDataFetcherWrapper<Author> {
+              override fun getType() = "Book"
+              override fun getFieldName() = "editor"
+              override fun fetch(environment: DataFetchingEnvironment): Mono<Author> {
+                log.info("[editor] fire data fetching")
+
+                return just(environment.getSource<Book>().editorId)
+                    .delayElement(Duration.ofMillis(delayTime))
                     .map(AuthorRepository::findById)
                     .log()
               }
@@ -119,15 +153,13 @@ class GraphQLAsyncDataFetchingTest {
               override suspend fun fetch(environment: DataFetchingEnvironment): Book {
                 log.info("[book] fire data fetching")
 
-                return withContext(Dispatchers.Default) {
-                  log.info("[book] waiting sleep")
+                log.info("[book] waiting sleep")
 
-                  delay(100)
+                delay(delayTime)
 
-                  log.info("[book] find by id")
+                log.info("[book] find by id")
 
-                  BookRepository.findById(environment.getArgument<String>("id").toInt())
-                }
+                return BookRepository.findById(environment.getArgument<String>("id").toInt())
               }
             },
             object : CoroutineDataFetcherWrapper<Author> {
@@ -136,15 +168,28 @@ class GraphQLAsyncDataFetchingTest {
               override suspend fun fetch(environment: DataFetchingEnvironment): Author {
                 log.info("[author] fire data fetching")
 
-                return withContext(Dispatchers.Default) {
-                  log.info("[author] waiting sleep")
+                log.info("[author] waiting sleep")
 
-                  delay(100)
+                delay(delayTime)
 
-                  log.info("[author] find by id")
+                log.info("[author] find by id")
 
-                  AuthorRepository.findById(environment.getSource<Book>().authorId)
-                }
+                return AuthorRepository.findById(environment.getSource<Book>().authorId)
+              }
+            },
+            object : CoroutineDataFetcherWrapper<Author> {
+              override fun getType() = "Book"
+              override fun getFieldName() = "editor"
+              override suspend fun fetch(environment: DataFetchingEnvironment): Author {
+                log.info("[editor] fire data fetching")
+
+                log.info("[editor] waiting sleep")
+
+                delay(delayTime)
+
+                log.info("[editor] find by id")
+
+                return AuthorRepository.findById(environment.getSource<Book>().editorId)
               }
             }
         )
@@ -152,7 +197,7 @@ class GraphQLAsyncDataFetchingTest {
   }
 
   private fun asyncFetching(fetchers: List<DataFetcherWrapper<*>>) {
-    val query = "{bookById(id: 1) {id,name,title,pageCount,author{firstName,lastName},company{name,address}}}"
+    val query = "{bookById(id: 1) {id,name,title,pageCount,author{firstName,lastName},editor{firstName,lastName},company{name,address}}}"
     val graphQL = build(fetchers)
 
     val async = newExecutionInput()
@@ -170,6 +215,8 @@ class GraphQLAsyncDataFetchingTest {
 
     // wait for async job
     val data = async.join()
+
+    log.info("fetched data")
 
     val bookById = data["bookById"] as? Map<*, *> ?: emptyMap<String, Any>()
 

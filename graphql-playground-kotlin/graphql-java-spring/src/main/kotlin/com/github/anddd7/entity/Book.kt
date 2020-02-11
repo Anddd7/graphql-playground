@@ -10,6 +10,7 @@ data class Book(
     val name: String,
     val pageCount: Int,
     val authorId: Int,
+    val editorId: Int,
     val company: Company,
     val publishedAt: LocalDateTime
 ) {
@@ -29,13 +30,13 @@ object BookRepository {
   private val books = listOf(
       Book(
           1, "Harry Potter and the Philosopher's Stone",
-          223, 1, github, of(2020, 1, 1, 0, 0, 0)
+          223, 1, 1, github, of(2020, 1, 1, 0, 0, 0)
       ),
       Book(2, "Moby Dick",
-          635, 2, github, of(2020, 1, 1, 0, 0, 0)
+          635, 2, 2, github, of(2020, 1, 1, 0, 0, 0)
       ),
       Book(3, "Interview with the vampire's Stone",
-          371, 3, thoughtworks, of(2020, 1, 1, 0, 0, 0)
+          371, 3, 3, thoughtworks, of(2020, 1, 1, 0, 0, 0)
       )
   )
 
