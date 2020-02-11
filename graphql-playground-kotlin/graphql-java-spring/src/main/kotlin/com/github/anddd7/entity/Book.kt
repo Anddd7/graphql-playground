@@ -1,6 +1,10 @@
 package com.github.anddd7.entity
 
 import graphql.schema.DataFetchingEnvironment
+import kotlinx.coroutines.delay
+import reactor.core.publisher.Flux
+import reactor.core.publisher.Mono
+import java.time.Duration
 import java.time.LocalDateTime
 import java.time.LocalDateTime.of
 import java.time.format.DateTimeFormatter.ofPattern
@@ -40,6 +44,39 @@ object BookRepository {
       )
   )
 
-  fun findById(id: Int) = books.first { it.id == id }
-  fun findAll() = books
+  fun findById(id: Int): Book {
+    Thread.sleep(100)
+
+    return books.first { it.id == id }
+  }
+
+  fun reactorFindById(id: Int): Mono<Book> {
+    return Mono
+        .fromCallable { books.first { it.id == id } }
+        .delayElement(Duration.ofMillis(100))
+  }
+
+  fun findAll(): List<Book> {
+    Thread.sleep(100)
+
+    return books
+  }
+
+  suspend fun coFindById(id: Int): Book {
+    delay(100)
+
+    return books.first { it.id == id }
+  }
+
+  fun reactorFindAll(): Flux<Book> {
+    return Mono
+        .delay(Duration.ofMillis(100))
+        .flatMapMany { Flux.fromStream(books::stream) }
+  }
+
+  suspend fun coFindAll(): List<Book> {
+    delay(100)
+
+    return books
+  }
 }

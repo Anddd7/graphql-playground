@@ -1,0 +1,10 @@
+<configuration>
+  <include resource="included-console.xml"/>
+
+  <logger level="DEBUG" name="com.github.anddd7"/>
+  <logger level="DEBUG" name="reactor"/>
+
+  <root level="INFO">"
+    <appender-ref ref="STDOUT"/>
+  </root>
+</configuration>

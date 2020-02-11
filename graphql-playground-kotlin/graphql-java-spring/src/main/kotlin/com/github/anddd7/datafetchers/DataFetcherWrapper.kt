@@ -38,6 +38,12 @@ interface CoroutineDataFetcherWrapper<T> : DataFetcherWrapper<CompletableFuture<
 
   suspend fun fetch(environment: DataFetchingEnvironment): T
 
+  /**
+   * 需要将coroutine转成future
+   *
+   * - 返回的future会由graphQL运行(使用的ForkJoinPool)
+   * - 该future会被立即runBlocking所阻塞, 直到suspend fetch完成
+   */
   override fun get(environment: DataFetchingEnvironment): CompletableFuture<T> {
     log.info("build completable future")
 

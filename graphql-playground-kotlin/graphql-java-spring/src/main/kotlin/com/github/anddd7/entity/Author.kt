@@ -1,5 +1,9 @@
 package com.github.anddd7.entity
 
+import kotlinx.coroutines.delay
+import reactor.core.publisher.Mono
+import java.time.Duration
+
 data class Author(
     val id: Int = 0,
     val firstName: String,
@@ -13,5 +17,21 @@ object AuthorRepository {
       Author(3, "Anne", "Rice")
   )
 
-  fun findById(id: Int) = authors.first { it.id == id }
+  fun findById(id: Int): Author {
+    Thread.sleep(100)
+
+    return authors.first { it.id == id }
+  }
+
+  fun reactorFindById(id: Int): Mono<Author> {
+    return Mono
+        .fromCallable { authors.first { it.id == id } }
+        .delayElement(Duration.ofMillis(100))
+  }
+
+  suspend fun coFindById(id: Int): Author {
+    delay(100)
+
+    return authors.first { it.id == id }
+  }
 }

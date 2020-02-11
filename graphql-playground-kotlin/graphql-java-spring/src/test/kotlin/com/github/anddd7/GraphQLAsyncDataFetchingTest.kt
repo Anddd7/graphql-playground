@@ -11,23 +11,41 @@ import com.github.anddd7.entity.Book
 import com.github.anddd7.entity.BookRepository
 import graphql.ExecutionInput.newExecutionInput
 import graphql.schema.DataFetchingEnvironment
-import kotlinx.coroutines.delay
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.RepeatedTest
+import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import reactor.core.publisher.Flux
-import reactor.core.publisher.Flux.fromStream
 import reactor.core.publisher.Mono
-import reactor.core.publisher.Mono.just
-import java.time.Duration
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletableFuture.supplyAsync
 
 class GraphQLAsyncDataFetchingTest {
   private val log = LoggerFactory.getLogger(this.javaClass)
 
-  private val delayTime: Long = 100
+  fun <T> Logger.wrap(title: String, f: () -> T): T {
+    log.info("[START] $title")
+    val t = f()
+    log.info("[ END ] $title")
+    return t
+  }
 
+  suspend fun <T> Logger.coWrap(title: String, f: suspend () -> T): T {
+    log.info("[START] $title")
+    val t = f()
+    log.info("[ END ] $title")
+    return t
+  }
+
+  /**
+   * 所有的completable future会并发执行, 执行时长会受线程池大小影响
+   *
+   * e.g
+   * - Query里的 bookById 和 books 是并发查询的
+   * - author 和 editor 也是并发的
+   * - 但是线程池有限, 部分任务会被阻塞
+   */
+  @RepeatedTest(5)
   fun `should execute async query with future data fetchers`() {
     asyncFetching(
         listOf(
@@ -35,72 +53,62 @@ class GraphQLAsyncDataFetchingTest {
               override fun getType() = "Query"
               override fun getFieldName() = "bookById"
               override fun get(environment: DataFetchingEnvironment): CompletableFuture<Book> {
-                log.info("[book] fire data fetching")
-
-                return supplyAsync {
-                  log.info("[book] get argument")
-
-                  environment.getArgument<String>("id").toInt()
+                return log.wrap("[book] fire data fetching") {
+                  supplyAsync(environment.getArgument<String>("id")::toInt)
+                      .thenApplyAsync {
+                        log.wrap("[book] find by id: $it") {
+                          BookRepository.findById(it)
+                        }
+                      }
                 }
-                    .thenApplyAsync {
-                      log.info("[book] waiting sleep")
-
-                      Thread.sleep(delayTime)
-
-                      log.info("[book] find by id")
-
-                      BookRepository.findById(it)
-                    }
+              }
+            },
+            object : FutureDataFetcherWrapper<List<Book>> {
+              override fun getType() = "Query"
+              override fun getFieldName() = "books"
+              override fun get(environment: DataFetchingEnvironment): CompletableFuture<List<Book>> {
+                return log.wrap("[books] fire data fetching") {
+                  supplyAsync {
+                    log.wrap("[books] find all", BookRepository::findAll)
+                  }
+                }
               }
             },
             object : FutureDataFetcherWrapper<Author> {
               override fun getType() = "Book"
               override fun getFieldName() = "author"
               override fun get(environment: DataFetchingEnvironment): CompletableFuture<Author> {
-                log.info("[author] fire data fetching")
-
-                return supplyAsync {
-                  log.info("[author] get argument")
-
-                  environment.getSource<Book>().authorId
+                return log.wrap("[author] fire data fetching") {
+                  supplyAsync(environment.getSource<Book>()::authorId)
+                      .thenApplyAsync {
+                        log.wrap("[author] find by id: $it") {
+                          AuthorRepository.findById(it)
+                        }
+                      }
                 }
-                    .thenApplyAsync {
-                      log.info("[author] waiting sleep")
-
-                      Thread.sleep(delayTime)
-
-                      log.info("[author] find by id")
-
-                      AuthorRepository.findById(it)
-                    }
               }
             },
             object : FutureDataFetcherWrapper<Author> {
               override fun getType() = "Book"
               override fun getFieldName() = "editor"
               override fun get(environment: DataFetchingEnvironment): CompletableFuture<Author> {
-                log.info("[editor] fire data fetching")
-
-                return supplyAsync {
-                  log.info("[editor] get argument")
-
-                  environment.getSource<Book>().editorId
+                return log.wrap("[editor] fire data fetching") {
+                  supplyAsync(environment.getSource<Book>()::editorId)
+                      .thenApplyAsync {
+                        log.wrap("[editor] find by id: $it") {
+                          AuthorRepository.findById(it)
+                        }
+                      }
                 }
-                    .thenApplyAsync {
-                      log.info("[editor] waiting sleep")
-
-                      Thread.sleep(delayTime)
-
-                      log.info("[editor] find by id")
-
-                      AuthorRepository.findById(it)
-                    }
               }
             }
         )
     )
   }
 
+  /**
+   * 同completable future, 只是mono用了另外的线程池, 因此执行时间可能和future不同
+   */
   @RepeatedTest(5)
   fun `should execute async query with reactor data fetchers`() {
     asyncFetching(
@@ -109,52 +117,54 @@ class GraphQLAsyncDataFetchingTest {
               override fun getType() = "Query"
               override fun getFieldName() = "bookById"
               override fun fetch(environment: DataFetchingEnvironment): Mono<Book> {
-                log.info("[book] fire data fetching")
+                val id = environment.getArgument<String>("id").toInt()
 
-                return just(environment.getArgument<String>("id").toInt())
-                    .delayElement(Duration.ofMillis(delayTime))
-                    .map(BookRepository::findById)
-                    .log()
+                return log.wrap("[book] fire data fetching: $id") {
+                  BookRepository.reactorFindById(id).log()
+                }
               }
             },
             object : FluxDataFetcherWrapper<Book> {
               override fun getType() = "Query"
               override fun getFieldName() = "books"
               override fun fetch(environment: DataFetchingEnvironment): Flux<Book> {
-                log.info("[books] fire data fetching")
-
-                return fromStream { BookRepository.findAll().stream() }
-                    .delayElements(Duration.ofMillis(delayTime))
+                return log.wrap("[books] fire data fetching") {
+                  BookRepository.reactorFindAll().log()
+                }
               }
             },
             object : MonoDataFetcherWrapper<Author> {
               override fun getType() = "Book"
               override fun getFieldName() = "author"
               override fun fetch(environment: DataFetchingEnvironment): Mono<Author> {
-                log.info("[author] fire data fetching")
+                val id = environment.getSource<Book>().authorId
 
-                return just(environment.getSource<Book>().authorId)
-                    .delayElement(Duration.ofMillis(delayTime))
-                    .map(AuthorRepository::findById)
-                    .log()
+                return log.wrap("[author] fire data fetching: $id") {
+                  AuthorRepository.reactorFindById(id).log()
+                }
               }
             },
             object : MonoDataFetcherWrapper<Author> {
               override fun getType() = "Book"
               override fun getFieldName() = "editor"
               override fun fetch(environment: DataFetchingEnvironment): Mono<Author> {
-                log.info("[editor] fire data fetching")
+                val id = environment.getSource<Book>().editorId
 
-                return just(environment.getSource<Book>().editorId)
-                    .delayElement(Duration.ofMillis(delayTime))
-                    .map(AuthorRepository::findById)
-                    .log()
+                return log.wrap("[editor] fire data fetching: $id") {
+                  AuthorRepository.reactorFindById(id).log()
+                }
               }
             }
         )
     )
   }
 
+  /**
+   * 同理, 只是线程池不同
+   *
+   * @see CoroutineDataFetcherWrapper
+   */
+  @RepeatedTest(5)
   fun `should execute async query with kotlin coroutines`() {
     asyncFetching(
         listOf(
@@ -162,45 +172,42 @@ class GraphQLAsyncDataFetchingTest {
               override fun getType() = "Query"
               override fun getFieldName() = "bookById"
               override suspend fun fetch(environment: DataFetchingEnvironment): Book {
-                log.info("[book] fire data fetching")
+                val id = environment.getArgument<String>("id").toInt()
 
-                log.info("[book] waiting sleep")
-
-                delay(delayTime)
-
-                log.info("[book] find by id")
-
-                return BookRepository.findById(environment.getArgument<String>("id").toInt())
+                return log.coWrap("[book] fire data fetching: $id") {
+                  BookRepository.coFindById(id)
+                }
+              }
+            },
+            object : CoroutineDataFetcherWrapper<List<Book>> {
+              override fun getType() = "Query"
+              override fun getFieldName() = "books"
+              override suspend fun fetch(environment: DataFetchingEnvironment): List<Book> {
+                return log.coWrap("[books] fire data fetching") {
+                  BookRepository.coFindAll()
+                }
               }
             },
             object : CoroutineDataFetcherWrapper<Author> {
               override fun getType() = "Book"
               override fun getFieldName() = "author"
               override suspend fun fetch(environment: DataFetchingEnvironment): Author {
-                log.info("[author] fire data fetching")
+                val id = environment.getSource<Book>().authorId
 
-                log.info("[author] waiting sleep")
-
-                delay(delayTime)
-
-                log.info("[author] find by id")
-
-                return AuthorRepository.findById(environment.getSource<Book>().authorId)
+                return log.coWrap("[author] fire data fetching: $id") {
+                  AuthorRepository.coFindById(id)
+                }
               }
             },
             object : CoroutineDataFetcherWrapper<Author> {
               override fun getType() = "Book"
               override fun getFieldName() = "editor"
               override suspend fun fetch(environment: DataFetchingEnvironment): Author {
-                log.info("[editor] fire data fetching")
+                val id = environment.getSource<Book>().editorId
 
-                log.info("[editor] waiting sleep")
-
-                delay(delayTime)
-
-                log.info("[editor] find by id")
-
-                return AuthorRepository.findById(environment.getSource<Book>().editorId)
+                return log.coWrap("[editor] fire data fetching: $id") {
+                  AuthorRepository.coFindById(id)
+                }
               }
             }
         )
