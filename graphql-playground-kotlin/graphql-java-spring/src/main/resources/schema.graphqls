@@ -35,6 +35,7 @@ type Message {
 # query & mutation
 
 type Query {
+    books: [Book]
     bookById(id: ID!): Book
     getMessage(id: ID!): Message
 }

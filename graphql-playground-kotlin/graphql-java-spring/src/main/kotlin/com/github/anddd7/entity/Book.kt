@@ -41,4 +41,5 @@ object BookRepository {
   )
 
   fun findById(id: Int) = books.first { it.id == id }
+  fun findAll() = books
 }

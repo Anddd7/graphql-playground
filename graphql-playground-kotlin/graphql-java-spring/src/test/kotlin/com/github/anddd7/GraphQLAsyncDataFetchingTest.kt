@@ -2,6 +2,7 @@ package com.github.anddd7
 
 import com.github.anddd7.datafetchers.CoroutineDataFetcherWrapper
 import com.github.anddd7.datafetchers.DataFetcherWrapper
+import com.github.anddd7.datafetchers.FluxDataFetcherWrapper
 import com.github.anddd7.datafetchers.FutureDataFetcherWrapper
 import com.github.anddd7.datafetchers.MonoDataFetcherWrapper
 import com.github.anddd7.entity.Author
@@ -14,6 +15,7 @@ import kotlinx.coroutines.delay
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.RepeatedTest
 import org.slf4j.LoggerFactory
+import reactor.core.publisher.Flux.fromStream
 import reactor.core.publisher.Mono
 import reactor.core.publisher.Mono.just
 import java.time.Duration
@@ -196,6 +198,45 @@ class GraphQLAsyncDataFetchingTest {
     )
   }
 
+  @RepeatedTest(5)
+  fun `should execute async query with flux data fetchers`() {
+    asyncFetchingList(
+        listOf(
+            object : FluxDataFetcherWrapper<Book> {
+              override fun getType() = "Query"
+              override fun getFieldName() = "books"
+              override fun fetch(environment: DataFetchingEnvironment) =
+                  fromStream { BookRepository.findAll().stream() }
+                      .delayElements(Duration.ofMillis(delayTime))
+            },
+            object : MonoDataFetcherWrapper<Author> {
+              override fun getType() = "Book"
+              override fun getFieldName() = "author"
+              override fun fetch(environment: DataFetchingEnvironment): Mono<Author> {
+                log.info("[author] fire data fetching")
+
+                return just(environment.getSource<Book>().authorId)
+                    .delayElement(Duration.ofMillis(delayTime))
+                    .map(AuthorRepository::findById)
+                    .log()
+              }
+            },
+            object : MonoDataFetcherWrapper<Author> {
+              override fun getType() = "Book"
+              override fun getFieldName() = "editor"
+              override fun fetch(environment: DataFetchingEnvironment): Mono<Author> {
+                log.info("[editor] fire data fetching")
+
+                return just(environment.getSource<Book>().editorId)
+                    .delayElement(Duration.ofMillis(delayTime))
+                    .map(AuthorRepository::findById)
+                    .log()
+              }
+            }
+        )
+    )
+  }
+
   private fun asyncFetching(fetchers: List<DataFetcherWrapper<*>>) {
     val query = "{bookById(id: 1) {id,name,title,pageCount,author{firstName,lastName},editor{firstName,lastName},company{name,address}}}"
     val graphQL = build(fetchers)
@@ -223,5 +264,32 @@ class GraphQLAsyncDataFetchingTest {
     assertThat(bookById["name"]).isEqualTo("Harry Potter and the Philosopher's Stone")
     assertThat(bookById["title"]).isEqualTo("Harry Potter and the Philosopher's Stone")
     assertThat(bookById["pageCount"]).isEqualTo(223)
+  }
+
+  private fun asyncFetchingList(fetchers: List<DataFetcherWrapper<*>>) {
+    val query = "{books {id,name,title,pageCount,author{firstName,lastName},editor{firstName,lastName},company{name,address}}}"
+    val graphQL = build(fetchers)
+
+    val async = newExecutionInput()
+        .query(query)
+        .build()
+        .let(graphQL::executeAsync)
+        .thenApplyAsync {
+          it.getData<Map<String, Any>>()
+        }
+        .whenCompleteAsync { result, _ ->
+          log.info("Finished with : $result")
+        }
+
+    log.info("Waiting for execution")
+
+    // wait for async job
+    val data = async.join()
+
+    log.info("fetched data")
+
+    val books = data["books"] as? List<Map<*, *>> ?: emptyList()
+
+    assertThat(books).hasSize(3)
   }
 }
