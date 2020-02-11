@@ -20,7 +20,7 @@ class MvcController(
     private val graphQLFactory: GraphQLFactory
 ) {
   @Value("classpath:schema.graphqls")
-  lateinit var schemaDefinition: Resource
+  private lateinit var schemaDefinition: Resource
 
   @RequestMapping("/all-good")
   fun allGood(@RequestBody request: GraphQLRequest): Map<String, Any> {
