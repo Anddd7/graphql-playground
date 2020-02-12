@@ -1,4 +1,4 @@
-package com.github.anddd7.datafetchers
+package com.github.anddd7.graphql
 
 import graphql.schema.DataFetcher
 import graphql.schema.DataFetchingEnvironment

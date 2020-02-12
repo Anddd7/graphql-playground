@@ -1,6 +1,6 @@
 package com.github.anddd7
 
-import com.github.anddd7.datafetchers.DataFetcherWrapper
+import com.github.anddd7.graphql.DataFetcherWrapper
 import com.github.anddd7.factory.GraphQLFactory
 import graphql.GraphQL
 

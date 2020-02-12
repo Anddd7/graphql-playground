@@ -1,6 +1,6 @@
 package com.github.anddd7.factory
 
-import com.github.anddd7.datafetchers.DataFetcherWrapper
+import com.github.anddd7.graphql.DataFetcherWrapper
 import graphql.GraphQL
 import graphql.schema.idl.RuntimeWiring
 import graphql.schema.idl.RuntimeWiring.newRuntimeWiring
