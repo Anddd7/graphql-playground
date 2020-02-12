@@ -4,7 +4,7 @@ import com.expediagroup.graphql.SchemaGeneratorConfig
 import com.expediagroup.graphql.TopLevelObject
 import com.expediagroup.graphql.toSchema
 import com.github.anddd7.entity.BookRepository
-import com.github.anddd7.graphql.GraphQLQuery
+import com.github.anddd7.graphql.BookQuery
 import io.mockk.impl.annotations.MockK
 import io.mockk.junit5.MockKExtension
 import org.assertj.core.api.Assertions.assertThat
@@ -19,7 +19,7 @@ internal class GraphQLSchemaTest {
 
   @Test
   fun `should generate schema by kotlin classes`() {
-    val bookService = GraphQLQuery(bookRepository)
+    val bookService = BookQuery(bookRepository)
 
     val config = SchemaGeneratorConfig(supportedPackages = listOf("com.github.anddd7.query"))
     val queries = listOf(TopLevelObject(bookService))
