@@ -1,6 +1,7 @@
 package com.github.anddd7.graphql.dto
 
-import com.github.anddd7.entity.AuthorRepository
+import com.expediagroup.graphql.annotations.GraphQLIgnore
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.github.anddd7.entity.Book
 import com.github.anddd7.entity.Company
 
@@ -9,10 +10,11 @@ data class BookDTO(
     val name: String,
     val pageCount: Int,
     val company: CompanyDTO,
-    private val authorId: Int,
-    private val authorRepository: AuthorRepository
+    @GraphQLIgnore
+    val authorId: Int
 ) {
-  fun author() = authorRepository.findById(authorId).toDTO()
+  @JsonIgnore
+  lateinit var author: AuthorDTO
 }
 
 data class CompanyDTO(
@@ -20,13 +22,12 @@ data class CompanyDTO(
     val address: String
 )
 
-fun Book.toDTO(authorRepository: AuthorRepository) = BookDTO(
+fun Book.toDTO() = BookDTO(
     id,
     name,
     pageCount,
     company.toDTO(),
-    authorId,
-    authorRepository
+    authorId
 )
 
 fun Company.toDTO() = CompanyDTO(name, address)
