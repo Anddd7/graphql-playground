@@ -27,4 +27,5 @@ dependencies {
   /* kotlin coroutines x reactor */
   implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core")
   implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
+  implementation("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8")
 }

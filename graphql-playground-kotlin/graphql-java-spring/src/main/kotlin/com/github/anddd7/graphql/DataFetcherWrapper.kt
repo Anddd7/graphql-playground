@@ -2,8 +2,8 @@ package com.github.anddd7.graphql
 
 import graphql.schema.DataFetcher
 import graphql.schema.DataFetchingEnvironment
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.future.future
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import reactor.core.publisher.Flux
@@ -47,22 +47,14 @@ interface CoroutineDataFetcherWrapper<T> : DataFetcherWrapper<CompletableFuture<
   override fun get(environment: DataFetchingEnvironment): CompletableFuture<T> {
     log.info("build completable future")
 
-    val future = CompletableFuture.supplyAsync {
-      log.info("trigger run blocking")
+    val future = GlobalScope.future {
+      log.info("call fetching in coroutine")
 
-      val result = runBlocking(Dispatchers.Default) {
-        log.info("call fetching in coroutine")
+      val fetch = fetch(environment)
 
-        val fetch = fetch(environment)
+      log.info("got result of fetching")
 
-        log.info("got result of fetching")
-
-        fetch
-      }
-
-      log.info("finished run blocking")
-
-      result
+      fetch
     }
 
     log.info("return completable future")
