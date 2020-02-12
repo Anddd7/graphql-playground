@@ -1,9 +1,8 @@
 package com.github.anddd7.graphql.fetchers
 
+import com.github.anddd7.entity.Author
 import com.github.anddd7.entity.AuthorRepository
-import com.github.anddd7.graphql.dto.AuthorDTO
-import com.github.anddd7.graphql.dto.BookDTO
-import com.github.anddd7.graphql.dto.toDTO
+import com.github.anddd7.entity.Book
 import graphql.schema.DataFetcher
 import graphql.schema.DataFetchingEnvironment
 import org.springframework.stereotype.Component
@@ -11,8 +10,8 @@ import org.springframework.stereotype.Component
 @Component("AuthorDataFetcher")
 class AuthorDataFetcher(
     private val authorRepository: AuthorRepository
-) : DataFetcher<AuthorDTO> {
-  override fun get(environment: DataFetchingEnvironment): AuthorDTO {
-    return authorRepository.findById(environment.getSource<BookDTO>().authorId).toDTO()
+) : DataFetcher<Author> {
+  override fun get(environment: DataFetchingEnvironment): Author {
+    return authorRepository.findById(environment.getSource<Book>().authorId)
   }
 }

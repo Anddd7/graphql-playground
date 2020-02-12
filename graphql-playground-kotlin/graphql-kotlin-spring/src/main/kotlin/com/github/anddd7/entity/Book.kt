@@ -1,6 +1,7 @@
 package com.github.anddd7.entity
 
-import graphql.schema.DataFetchingEnvironment
+import com.expediagroup.graphql.annotations.GraphQLIgnore
+import com.fasterxml.jackson.annotation.JsonIgnore
 import kotlinx.coroutines.delay
 import org.springframework.stereotype.Repository
 import reactor.core.publisher.Flux
@@ -17,10 +18,16 @@ data class Book(
     val authorId: Int,
     val editorId: Int,
     val company: Company,
+    @GraphQLIgnore
     val publishedAt: LocalDateTime
 ) {
-  fun getPublishedAt(environment: DataFetchingEnvironment) =
-      ofPattern(environment.getArgument<String>("dateFormat")).let(publishedAt::format)
+  @JsonIgnore
+  lateinit var author: Author
+  @JsonIgnore
+  lateinit var editor: Author
+
+  fun publishedAt(pattern: String?): String =
+      ofPattern(pattern ?: "dd, MMM, yyyy").let(publishedAt::format)
 }
 
 data class Company(
