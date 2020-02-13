@@ -11,18 +11,19 @@ class BookFactory(
     private val authorRepository: AuthorRepository
 ) {
   suspend fun findById(id: Int) =
-      bookRepository.findById(id).toBook()
+      bookRepository.findById(id).toBook(authorRepository)
 
   suspend fun findAll() =
-      bookRepository.findAll().map { it.toBook() }
-
-  private fun BookPO.toBook() = BookWrapper(
-      id,
-      name,
-      pageCount,
-      authorId,
-      editorId,
-      company,
-      publishedAt
-  ) { authorRepository.findById(it) }
+      bookRepository.findAll().map { it.toBook(authorRepository) }
 }
+
+fun BookPO.toBook(authorRepository: AuthorRepository) = BookWrapper(
+    id,
+    name,
+    pageCount,
+    authorId,
+    editorId,
+    company,
+    publishedAt,
+    authorRepository
+)

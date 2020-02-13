@@ -1,6 +1,6 @@
 package com.github.anddd7.graphql.model
 
-import com.github.anddd7.persistence.AuthorPO
+import com.github.anddd7.persistence.AuthorRepository
 import com.github.anddd7.persistence.CompanyPO
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter.ofPattern
@@ -13,10 +13,10 @@ data class BookWrapper(
     private val editorId: Int,
     val company: CompanyPO,
     private val publishedAt: LocalDateTime,
-    private val authorById: suspend (Int) -> AuthorPO
+    private val authorRepository: AuthorRepository
 ) {
-  suspend fun author() = authorById(authorId)
-  suspend fun editor() = authorById(editorId)
+  suspend fun author() = authorRepository.findById(authorId)
+  suspend fun editor() = authorRepository.findById(editorId)
   fun publishedAt(pattern: String?): String =
       ofPattern(pattern ?: "dd, MMM, yyyy").let(publishedAt::format)
 }
