@@ -16,8 +16,6 @@ class BookFactory(
   suspend fun findAll() =
       bookRepository.findAll().map { it.toBook() }
 
-  private suspend fun findAuthorById(it: Int) = authorRepository.findById(it)
-
   private fun BookPO.toBook() = BookWrapper(
       id,
       name,
@@ -26,5 +24,5 @@ class BookFactory(
       editorId,
       company,
       publishedAt
-  ) { findAuthorById(it) }
+  ) { authorRepository.findById(it) }
 }
