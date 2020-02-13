@@ -3,7 +3,7 @@ package com.github.anddd7
 import com.expediagroup.graphql.SchemaGeneratorConfig
 import com.expediagroup.graphql.TopLevelObject
 import com.expediagroup.graphql.toSchema
-import com.github.anddd7.entity.BookRepository
+import com.github.anddd7.persistence.BookRepository
 import com.github.anddd7.graphql.BookQuery
 import io.mockk.impl.annotations.MockK
 import io.mockk.junit5.MockKExtension
