@@ -1,10 +1,8 @@
 package com.github.anddd7.graphql.model
 
-import com.github.anddd7.persistence.AuthorPO
 import com.github.anddd7.persistence.AuthorRepository
 import com.github.anddd7.persistence.BookPO
 import com.github.anddd7.persistence.BookRepository
-import com.github.anddd7.persistence.CompanyPO
 import org.springframework.stereotype.Component
 
 @Component
@@ -20,16 +18,13 @@ class BookFactory(
 
   private suspend fun findAuthorById(it: Int) = authorRepository.findById(it)
 
-  private fun BookPO.toBook() = Book(
+  private fun BookPO.toBook() = BookWrapper(
       id,
       name,
       pageCount,
       authorId,
       editorId,
-      company.toCompany(),
+      company,
       publishedAt
-  ) { findAuthorById(it).toAuthor() }
-
-  private fun CompanyPO.toCompany() = Company(name, address)
-  private fun AuthorPO.toAuthor() = Author(id, firstName, lastName)
+  ) { findAuthorById(it) }
 }
