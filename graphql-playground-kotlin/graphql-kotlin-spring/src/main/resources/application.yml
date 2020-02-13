@@ -1,4 +1,4 @@
 graphql:
   packages:
-    - com.github.anddd7.entity
+    - com.github.anddd7.persistence
     - com.github.anddd7.graphql
