@@ -6,12 +6,13 @@ import com.github.anddd7.entity.Book
 import graphql.schema.DataFetcher
 import graphql.schema.DataFetchingEnvironment
 import org.springframework.stereotype.Component
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.CompletableFuture.supplyAsync
 
 @Component("AuthorDataFetcher")
 class AuthorDataFetcher(
     private val authorRepository: AuthorRepository
-) : DataFetcher<Author> {
-  override fun get(environment: DataFetchingEnvironment): Author {
-    return authorRepository.findById(environment.getSource<Book>().authorId)
-  }
+) : DataFetcher<CompletableFuture<Author>> {
+  override fun get(environment: DataFetchingEnvironment): CompletableFuture<Author> =
+      supplyAsync { authorRepository.findById(environment.getSource<Book>().authorId) }
 }

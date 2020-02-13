@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component
 class BookQuery(
     private val bookRepository: BookRepository
 ) : Query {
-  fun bookById(id: Int) = bookRepository.findById(id)
+  suspend fun bookById(id: Int) = bookRepository.coFindById(id)
+  suspend fun books() = bookRepository.coFindAll()
 }
 
