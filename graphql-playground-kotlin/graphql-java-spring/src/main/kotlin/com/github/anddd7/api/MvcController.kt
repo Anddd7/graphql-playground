@@ -1,6 +1,6 @@
 package com.github.anddd7.api
 
-import com.github.anddd7.graphql.DataFetcherWrapper
+import com.github.anddd7.factory.DataFetcherWrapper
 import com.github.anddd7.entity.Author
 import com.github.anddd7.entity.AuthorRepository
 import com.github.anddd7.entity.Book

@@ -1,6 +1,6 @@
 package com.github.anddd7
 
-import com.github.anddd7.graphql.DataFetcherWrapper
+import com.github.anddd7.factory.DataFetcherWrapper
 import com.github.anddd7.entity.Message
 import com.github.anddd7.entity.MessageInput
 import graphql.ExecutionInput.newExecutionInput

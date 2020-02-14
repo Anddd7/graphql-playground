@@ -1,10 +1,10 @@
 package com.github.anddd7
 
-import com.github.anddd7.graphql.CoroutineDataFetcherWrapper
-import com.github.anddd7.graphql.DataFetcherWrapper
-import com.github.anddd7.graphql.FluxDataFetcherWrapper
-import com.github.anddd7.graphql.FutureDataFetcherWrapper
-import com.github.anddd7.graphql.MonoDataFetcherWrapper
+import com.github.anddd7.factory.CoroutineDataFetcherWrapper
+import com.github.anddd7.factory.DataFetcherWrapper
+import com.github.anddd7.factory.FluxDataFetcherWrapper
+import com.github.anddd7.factory.FutureDataFetcherWrapper
+import com.github.anddd7.factory.MonoDataFetcherWrapper
 import com.github.anddd7.entity.Author
 import com.github.anddd7.entity.AuthorRepository
 import com.github.anddd7.entity.Book
