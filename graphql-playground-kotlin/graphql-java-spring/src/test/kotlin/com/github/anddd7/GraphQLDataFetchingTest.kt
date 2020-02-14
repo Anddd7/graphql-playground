@@ -10,9 +10,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 class GraphQLDataFetchingTest {
-  private val graphQL = build()
-
-  private fun build() = build(
+  private val graphQL = build(
       listOf(
           object : DataFetcherWrapper<Book> {
             override fun getType() = "Query"

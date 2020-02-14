@@ -13,24 +13,24 @@ import java.nio.file.Files.readAllBytes
 @Component
 class GraphQLFactory {
 
-  fun graphQL(schemaDefinition: Resource, dataFetchers: List<DataFetcherWrapper<*>>): GraphQL {
+  fun graphQL(schemaDefinition: Resource, fetchers: List<DataFetcherWrapper<*>>): GraphQL {
     val definition = String(readAllBytes(schemaDefinition.file.toPath()))
 
-    return buildGraphQL(definition, dataFetchers)
+    return buildGraphQL(definition, fetchers)
   }
 
   companion object {
-    fun buildGraphQL(definition: String, dataFetchers: List<DataFetcherWrapper<*>>): GraphQL {
+    fun buildGraphQL(definition: String, fetchers: List<DataFetcherWrapper<*>>): GraphQL {
       val typeRegistry = SchemaParser().parse(definition)
-      val runtimeWiring = getRuntimeWiring(dataFetchers)
+      val runtimeWiring = getRuntimeWiring(fetchers)
       val graphQLSchema = SchemaGenerator().makeExecutableSchema(typeRegistry, runtimeWiring)
 
       return GraphQL.newGraphQL(graphQLSchema).build()
     }
 
-    private fun getRuntimeWiring(reactiveMonoFetchers: List<DataFetcherWrapper<*>>): RuntimeWiring =
+    private fun getRuntimeWiring(fetchers: List<DataFetcherWrapper<*>>): RuntimeWiring =
         newRuntimeWiring().apply {
-          reactiveMonoFetchers.forEach { fetcher ->
+          fetchers.forEach { fetcher ->
             type(fetcher.getType()) { it.dataFetcher(fetcher.getFieldName(), fetcher) }
           }
         }.build()
