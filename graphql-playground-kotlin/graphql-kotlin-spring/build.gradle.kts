@@ -7,8 +7,7 @@ plugins {
 
 dependencies {
   /* graphql */
-//  implementation("com.expediagroup:graphql-kotlin-schema-generator:2.0.0-RC6")
-  implementation("com.expediagroup:graphql-kotlin-spring-server:2.0.0-RC6")
+  implementation("com.expediagroup:graphql-kotlin-spring-server:2.0.0-RC10")
 
   /* webflux x reactor */
   implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
